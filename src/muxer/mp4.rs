@@ -2193,18 +2193,25 @@ fn build_tkhd_box(video: &Mp4VideoTrack) -> Vec<u8> {
 }
 
 fn build_tkhd_box_with_id(track_id: u32, volume: u16, width: u32, height: u32) -> Vec<u8> {
+    // tkhd flags:
+    // 0x000001 = track_enabled
+    // 0x000002 = track_in_movie
+    // 0x000004 = track_in_preview
+    // Most players require at least track_enabled | track_in_movie (0x000003)
+    const TKHD_FLAGS: u32 = 0x000003; // version=0, flags=track_enabled|track_in_movie
     let mut payload = Vec::new();
-    payload.extend_from_slice(&0u32.to_be_bytes());
-    payload.extend_from_slice(&0u32.to_be_bytes());
-    payload.extend_from_slice(&0u32.to_be_bytes());
-    payload.extend_from_slice(&track_id.to_be_bytes());
-    payload.extend_from_slice(&0u32.to_be_bytes());
-    payload.extend_from_slice(&0u64.to_be_bytes());
-    payload.extend_from_slice(&0u64.to_be_bytes());
-    payload.extend_from_slice(&0u16.to_be_bytes());
-    payload.extend_from_slice(&0u16.to_be_bytes());
-    payload.extend_from_slice(&volume.to_be_bytes());
-    payload.extend_from_slice(&0u16.to_be_bytes());
+    // tkhd version 0 structure (ISO 14496-12):
+    payload.extend_from_slice(&TKHD_FLAGS.to_be_bytes()); // version (1) + flags (3)
+    payload.extend_from_slice(&0u32.to_be_bytes()); // creation_time
+    payload.extend_from_slice(&0u32.to_be_bytes()); // modification_time
+    payload.extend_from_slice(&track_id.to_be_bytes()); // track_id
+    payload.extend_from_slice(&0u32.to_be_bytes()); // reserved
+    payload.extend_from_slice(&0u32.to_be_bytes()); // duration
+    payload.extend_from_slice(&0u64.to_be_bytes()); // reserved (8 bytes)
+    payload.extend_from_slice(&0u16.to_be_bytes()); // layer
+    payload.extend_from_slice(&0u16.to_be_bytes()); // alternate_group
+    payload.extend_from_slice(&volume.to_be_bytes()); // volume
+    payload.extend_from_slice(&0u16.to_be_bytes()); // reserved
     let matrix = [
         0x0001_0000_u32,
         0,
